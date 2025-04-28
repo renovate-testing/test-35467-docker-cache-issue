@@ -1,0 +1,15 @@
+{
+  "kubernetes": {
+    "fileMatch": [
+      "\\.yaml$"
+    ]
+  },
+  "hostRules": [
+    {
+      "hostType": "docker",
+      "matchHost": "https://us-central1-docker.pkg.dev",
+      "username": "_json_key_base64",
+      "password": "{{ secrets.PKG_AUTH }}"
+    }
+  ]
+}

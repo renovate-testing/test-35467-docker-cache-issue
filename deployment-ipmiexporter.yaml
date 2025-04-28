@@ -1,0 +1,61 @@
+---
+kind: Deployment
+apiVersion: apps/v1
+metadata:
+  name: ipmi-exporter
+  namespace: vm-system
+  labels:
+    app: ipmi-exporter
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ipmi-exporter
+  template:
+    metadata:
+      labels:
+        app: ipmi-exporter
+    spec:
+      automountServiceAccountToken: false
+      containers:
+      - name: ipmi-exporter
+        image: us-central1-docker.pkg.dev/neon-shared-service/bei/neon-ipmi-exporter:v1.8.0-alpine-3.20.1
+        imagePullPolicy: IfNotPresent
+        args:
+        - --config.file=/etc/ipmi_exporter/ipmi_local.yml
+        ports:
+        - name: metrics
+          containerPort: 9290
+          protocol: TCP
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: metrics
+        resources:
+          requests:
+            cpu: "0.02"
+            memory: 8Mi
+          limits:
+            cpu: "0.6"
+            memory: 128Mi
+        securityContext:
+          allowPrivilegeEscalation: true
+          readOnlyRootFilesystem: false
+          privileged: true
+        volumeMounts:
+        - name: ipmi-exporter-config
+          mountPath: /etc/ipmi_exporter
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+      nodeSelector:
+        kubernetes.io/arch: amd64
+        neonscience.org/lcrole: primary
+      volumes:
+      - name: ipmi-exporter-config
+        configMap:
+          name: ipmi-exporter-config
+      restartPolicy: Always
+  strategy:
+    type: Recreate
+  revisionHistoryLimit: 10
+  progressDeadlineSeconds: 600
